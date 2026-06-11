@@ -1,0 +1,14 @@
+# Chess Arena Server - Python Dependencies
+# Python 3.11+
+
+# Chess move validation and FEN/PGN support
+python-chess==1.10.0
+
+# Async WebSocket server
+websockets==12.0
+
+# Optional: for external chess engine integration
+# Stockfish must be installed separately via system package manager:
+# apt-get install stockfish (Debian/Ubuntu)
+# brew install stockfish (macOS)
+# choco install stockfish (Windows)

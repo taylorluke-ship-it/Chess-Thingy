@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Lobby</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #091a2c 0%, #1f3b62 100%);
+            color: #f4f7fb;
+            min-height: 100vh;
+        }
+
+        header {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(5, 15, 35, 0.8);
+            backdrop-filter: blur(12px);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        #statusBar {
+            font-size: 14px;
+            opacity: 0.85;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            padding: 24px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            font-size: 20px;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        button, select, input {
+            border: none;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #f4f7fb;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        button:hover, select:hover, input:hover {
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .room-list {
+            display: grid;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .room-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .room-card strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .room-card small {
+            opacity: 0.7;
+        }
+
+        #gameArea {
+            display: none;
+            grid-template-columns: minmax(280px, 1fr) 1.5fr;
+            gap: 20px;
+        }
+
+        #boardPanel {
+            display: grid;
+            gap: 16px;
+        }
+
+        #chessBoard {
+            width: 100%;
+            max-width: 640px;
+            border-radius: 18px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .panel .chat-messages,
+        .panel .move-history {
+            max-height: 320px;
+            overflow-y: auto;
+            margin-top: 12px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .chat-message,
+        .history-event {
+            background: rgba(255, 255, 255, 0.06);
+            padding: 10px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+        }
+
+        .chat-form {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 1100px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+            #gameArea {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Chess Arena</h1>
+        <div id="statusBar">Initializing...</div>
+    </header>
+
+    <div class="layout">
+        <div class="panel" id="menuPanel">
+            <h2>Main Menu</h2>
+            <div class="button-group">
+                <select id="gameType">
+                    <option value="human">Human vs Human</option>
+                    <option value="ai">Human vs AI</option>
+                </select>
+                <select id="difficultySelect">
+                    <option value="EASY">Easy</option>
+                    <option value="MEDIUM" selected>Medium</option>
+                    <option value="HARD">Hard</option>
+                    <option value="EXPERT">Expert</option>
+                </select>
+            </div>
+            <div class="button-group" style="margin-top: 16px;">
+                <button id="createRoomButton">Create Room</button>
+                <button id="refreshRoomsButton">Refresh Rooms</button>
+            </div>
+
+            <div style="margin-top: 24px;">
+                <h2>Lobby Browser</h2>
+                <div id="roomList" class="room-list"></div>
+            </div>
+        </div>
+
+        <div class="panel" id="gameArea">
+            <div id="boardPanel">
+                <div class="info-grid">
+                    <div class="info-card">Room: <strong id="roomNameText">-</strong></div>
+                    <div class="info-card">Players: <strong id="roomPlayersText">-</strong></div>
+                </div>
+                <canvas id="chessBoard" width="640" height="640"></canvas>
+                <div class="info-grid">
+                    <div class="info-card">Turn: <strong id="turnText">-</strong></div>
+                    <div class="info-card">Status: <strong id="gameStatusText">-</strong></div>
+                </div>
+            </div>
+
+            <div>
+                <div class="panel" style="margin-bottom: 20px;">
+                    <h2>Chat Panel</h2>
+                    <div id="chatHistory" class="chat-messages"></div>
+                    <div class="chat-form">
+                        <input id="chatInput" placeholder="Type a message..." />
+                        <button id="sendChatButton">Send</button>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2>Move History</h2>
+                    <div id="moveHistory" class="move-history"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="customer.js"></script>
+</body>
+</html>
